@@ -123,7 +123,7 @@ class WordleCli:
             print("You won!")
         else:
             print("Game over")
-        self.print_results(game.results)
+        self.print_share_code(game.results)
 
         input()
 
