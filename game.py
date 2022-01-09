@@ -122,8 +122,8 @@ class WordleCli:
         if game.state == GameState.WIN:
             print("You won!")
         else:
-            print("Game over")
-        self.print_share_code(game.results)
+            print(f"Game over. The word was: {game.word}")
+        self.print_share_code(game.results, game.state == GameState.WIN)
 
         input()
 
@@ -151,8 +151,8 @@ class WordleCli:
             strs.append(prefix + letter)
         print(''.join(strs))
 
-    def print_share_code(self, results):
-        print(f"pbwordle {len(results)}/6")
+    def print_share_code(self, results, won):
+        print(f"pbwordle {len(results) if won else 'X'}/6")
         for result in results:
             print(''.join(
                 '⬛' if match_type == MatchType.MISS
