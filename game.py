@@ -1,5 +1,6 @@
 import hashlib
 import json
+import os
 import random
 import sys
 from enum import Enum
@@ -106,11 +107,11 @@ class WordleCLI:
 
     def new_game(self, seed=None):
         if seed is None:
-            word = random.choice(word_list_short)
-        else:
-            index = int(hashlib.sha1(seed.encode('utf-8')).hexdigest(), 16) % len(word_list_short)
-            word = word_list_short[index]
+            seed = ''.join(chr(random.randint(ord('a'), ord('z'))) for _ in range(5))
+        index = int(hashlib.sha1(seed.encode('utf-8')).hexdigest(), 16) % len(word_list_short)
+        word = word_list_short[index]
         game = Wordle(word)
+        os.system('cls')
         while game.state == GameState.IN_PROGRESS:
             while True:
                 try:
@@ -120,7 +121,7 @@ class WordleCLI:
                     print()
                 else:
                     break
-            #os.system('cls')
+            os.system('cls')
             for word, result in zip(game.guess_list, game.results):
                 self.print_result(word, result)
             print()
@@ -130,9 +131,8 @@ class WordleCLI:
             print("You won!")
         else:
             print(f"Game over. The word was: {game.word}")
-        self.print_share_code(game.results, game.state == GameState.WIN)
-
-        input()
+        self.print_share_code(game.results, game.state == GameState.WIN, seed)
+        print()
 
     def print_result(self, guess_word, result):
         strs = []
@@ -158,8 +158,8 @@ class WordleCLI:
             strs.append(prefix + letter)
         print(''.join(strs))
 
-    def print_share_code(self, results, won):
-        print(f"pbwordle {len(results) if won else 'X'}/6")
+    def print_share_code(self, results, won, seed):
+        print(f"pbwordle {len(results) if won else 'X'}/6 [seed: {seed}]")
         for result in results:
             print(''.join(
                 '⬛' if match_type == MatchType.MISS
