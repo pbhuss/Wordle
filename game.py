@@ -1,5 +1,7 @@
+import hashlib
 import json
 import random
+import sys
 from enum import Enum
 
 import colorama
@@ -97,13 +99,18 @@ class Wordle:
         return result
 
 
-class WordleCli:
+class WordleCLI:
 
     def __init__(self):
         colorama.init(autoreset=True)
 
-    def new_game(self):
-        game = Wordle(random.choice(word_list_short))
+    def new_game(self, seed=None):
+        if seed is None:
+            word = random.choice(word_list_short)
+        else:
+            index = int(hashlib.sha1(seed.encode('utf-8')).hexdigest(), 16) % len(word_list_short)
+            word = word_list_short[index]
+        game = Wordle(word)
         while game.state == GameState.IN_PROGRESS:
             while True:
                 try:
@@ -163,5 +170,6 @@ class WordleCli:
 
 
 if __name__ == "__main__":
-    cli = WordleCli()
-    cli.new_game()
+    seed = sys.argv[1] if len(sys.argv) > 1 else None
+    cli = WordleCLI()
+    cli.new_game(seed=seed)
