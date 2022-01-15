@@ -3,27 +3,25 @@ import hashlib
 import json
 import random
 from enum import Enum
+from typing import List, Mapping
 
 import colorama
 from colorama import Fore, Back
 
 
 class MatchType(Enum):
-
     MISS = 0
     WRONG_POS = 1
     HIT = 2
 
 
 class GameState(Enum):
-
     IN_PROGRESS = 0
     LOSS = 1
     WIN = 2
 
 
 class LetterState(Enum):
-
     UNKNOWN = 0
     IN_WORD = 1
     NOT_IN_WORD = 2
@@ -48,7 +46,7 @@ word_list = word_list_short + word_list_extra
 
 class Wordle:
 
-    def __init__(self, word: str):
+    def __init__(self, word: str) -> None:
         self.word = word.strip().lower()
         if len(self.word) != 5:
             raise InvalidWordError("Length of word must be exactly 5")
@@ -67,20 +65,20 @@ class Wordle:
             return GameState.WIN
 
     @property
-    def letter_states(self):
+    def letter_states(self) -> Mapping[str, LetterState]:
         states = {
             chr(i): LetterState.UNKNOWN
             for i in range(ord('a'), ord('z') + 1)
         }
         for guess_word, result in zip(self.guess_list, self.results):
             for letter, match in zip(guess_word, result):
-                if match == MatchType.MISS:
+                if match == MatchType.MISS and states[letter] != LetterState.IN_WORD:
                     states[letter] = LetterState.NOT_IN_WORD
                 else:
                     states[letter] = LetterState.IN_WORD
-        return sorted(states.items())
+        return states
 
-    def guess(self, guess_word: str):
+    def guess(self, guess_word: str) -> List[MatchType]:
         guess_word = guess_word.strip().lower()
         if self.state != GameState.IN_PROGRESS:
             raise GameOverError("game is over")
@@ -93,7 +91,7 @@ class Wordle:
         self.results.append(result)
         return result
 
-    def get_result(self, guess_word):
+    def get_result(self, guess_word: str) -> List[MatchType]:
         non_hits = [
             real_letter
             for (guess_letter, real_letter) in zip(guess_word, self.word)
@@ -113,10 +111,10 @@ class Wordle:
 
 class WordleCLI:
 
-    def __init__(self):
+    def __init__(self) -> None:
         colorama.init(autoreset=True)
 
-    def new_game(self, seed=None):
+    def new_game(self, seed: str = None) -> None:
         if seed is None:
             seed = ''.join(chr(random.randint(ord('a'), ord('z'))) for _ in range(5))
         index = int(hashlib.sha1(seed.encode('utf-8')).hexdigest(), 16) % len(word_list_short)
@@ -146,7 +144,7 @@ class WordleCLI:
         print()
 
     @staticmethod
-    def print_result(guess_word, result):
+    def print_result(guess_word: str, result: List[MatchType]) -> None:
         strs = []
         for letter, match_type in zip(guess_word, result):
             if match_type == MatchType.MISS:
@@ -159,9 +157,9 @@ class WordleCLI:
         print(''.join(strs))
 
     @staticmethod
-    def print_letter_states(letter_states):
+    def print_letter_states(letter_states: Mapping[str, LetterState]) -> None:
         strs = []
-        for letter, state in letter_states:
+        for letter, state in sorted(letter_states.items()):
             if state == LetterState.UNKNOWN:
                 prefix = Fore.WHITE + Back.BLACK
             elif state == LetterState.IN_WORD:
@@ -172,7 +170,7 @@ class WordleCLI:
         print(''.join(strs))
 
     @staticmethod
-    def print_share_code(results, won, seed):
+    def print_share_code(results: List[List[MatchType]], won: bool, seed: str) -> None:
         print(f"pbwordle {len(results) if won else 'X'}/6 [seed: {seed}]")
         for result in results:
             print(''.join(
