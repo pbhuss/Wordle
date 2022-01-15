@@ -1,8 +1,7 @@
+import argparse
 import hashlib
 import json
-import os
 import random
-import sys
 from enum import Enum
 
 import colorama
@@ -90,13 +89,25 @@ class Wordle:
         if guess_word not in word_list:
             raise InvalidWordError("Guess not in valid word list")
         self.guess_list.append(guess_word)
-        result = [
-            MatchType.HIT if guess_letter == word_letter
-            else MatchType.WRONG_POS if guess_letter in self.word
-            else MatchType.MISS
-            for (guess_letter, word_letter) in zip(guess_word, self.word)
-        ]
+        result = self.get_result(guess_word)
         self.results.append(result)
+        return result
+
+    def get_result(self, guess_word):
+        non_hits = [
+            real_letter
+            for (guess_letter, real_letter) in zip(guess_word, self.word)
+            if guess_letter != real_letter
+        ]
+        result = []
+        for (guess_letter, real_letter) in zip(guess_word, self.word):
+            if guess_letter == real_letter:
+                result.append(MatchType.HIT)
+            elif guess_letter in non_hits:
+                result.append(MatchType.WRONG_POS)
+                non_hits.remove(guess_letter)
+            else:
+                result.append(MatchType.MISS)
         return result
 
 
@@ -111,7 +122,7 @@ class WordleCLI:
         index = int(hashlib.sha1(seed.encode('utf-8')).hexdigest(), 16) % len(word_list_short)
         word = word_list_short[index]
         game = Wordle(word)
-        os.system('cls')
+        print('\n' * 100)
         while game.state == GameState.IN_PROGRESS:
             while True:
                 try:
@@ -121,7 +132,7 @@ class WordleCLI:
                     print()
                 else:
                     break
-            os.system('cls')
+            print('\n' * 100)
             for word, result in zip(game.guess_list, game.results):
                 self.print_result(word, result)
             print()
@@ -134,7 +145,8 @@ class WordleCLI:
         self.print_share_code(game.results, game.state == GameState.WIN, seed)
         print()
 
-    def print_result(self, guess_word, result):
+    @staticmethod
+    def print_result(guess_word, result):
         strs = []
         for letter, match_type in zip(guess_word, result):
             if match_type == MatchType.MISS:
@@ -146,7 +158,8 @@ class WordleCLI:
             strs.append(prefix + letter)
         print(''.join(strs))
 
-    def print_letter_states(self, letter_states):
+    @staticmethod
+    def print_letter_states(letter_states):
         strs = []
         for letter, state in letter_states:
             if state == LetterState.UNKNOWN:
@@ -158,7 +171,8 @@ class WordleCLI:
             strs.append(prefix + letter)
         print(''.join(strs))
 
-    def print_share_code(self, results, won, seed):
+    @staticmethod
+    def print_share_code(results, won, seed):
         print(f"pbwordle {len(results) if won else 'X'}/6 [seed: {seed}]")
         for result in results:
             print(''.join(
@@ -170,6 +184,8 @@ class WordleCLI:
 
 
 if __name__ == "__main__":
-    seed = sys.argv[1] if len(sys.argv) > 1 else None
+    parser = argparse.ArgumentParser(prog="wordle", description="Clone of the popular Wordle game")
+    parser.add_argument("seed", help="Optional game seed", nargs='?')
+    args = parser.parse_args()
     cli = WordleCLI()
-    cli.new_game(seed=seed)
+    cli.new_game(seed=args.seed)

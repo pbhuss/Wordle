@@ -6,6 +6,6 @@
 
 ## To play
 #### To use a random word
-`python -m game`
+`python -m wordle`
 #### Or to use a particular seed
-`python -m game [seed]`
+`python -m wordle [seed]`
