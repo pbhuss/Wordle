@@ -3,10 +3,11 @@ import hashlib
 import json
 import random
 from enum import Enum
-from typing import List, Mapping
+from typing import Mapping
 
 import colorama
-from colorama import Fore, Back
+from colorama import Back
+from colorama import Fore
 
 
 class MatchType(Enum):
@@ -45,7 +46,6 @@ word_list = word_list_short + word_list_extra
 
 
 class Wordle:
-
     def __init__(self, word: str) -> None:
         self.word = word.strip().lower()
         if len(self.word) != 5:
@@ -66,10 +66,7 @@ class Wordle:
 
     @property
     def letter_states(self) -> Mapping[str, LetterState]:
-        states = {
-            chr(i): LetterState.UNKNOWN
-            for i in range(ord('a'), ord('z') + 1)
-        }
+        states = {chr(i): LetterState.UNKNOWN for i in range(ord("a"), ord("z") + 1)}
         for guess_word, result in zip(self.guess_list, self.results):
             for letter, match in zip(guess_word, result):
                 if match == MatchType.MISS and states[letter] != LetterState.IN_WORD:
@@ -78,7 +75,7 @@ class Wordle:
                     states[letter] = LetterState.IN_WORD
         return states
 
-    def guess(self, guess_word: str) -> List[MatchType]:
+    def guess(self, guess_word: str) -> list[MatchType]:
         guess_word = guess_word.strip().lower()
         if self.state != GameState.IN_PROGRESS:
             raise GameOverError("game is over")
@@ -91,7 +88,7 @@ class Wordle:
         self.results.append(result)
         return result
 
-    def get_result(self, guess_word: str) -> List[MatchType]:
+    def get_result(self, guess_word: str) -> list[MatchType]:
         non_hits = [
             real_letter
             for (guess_letter, real_letter) in zip(guess_word, self.word)
@@ -110,17 +107,22 @@ class Wordle:
 
 
 class WordleCLI:
-
     def __init__(self) -> None:
         colorama.init(autoreset=True)
 
     def new_game(self, seed: str = None) -> None:
         if seed is None:
-            seed = ''.join(chr(random.randint(ord('a'), ord('z'))) for _ in range(5))
-        index = int(hashlib.sha1(seed.encode('utf-8')).hexdigest(), 16) % len(word_list_short)
+            seed = "".join(chr(random.randint(ord("a"), ord("z"))) for _ in range(5))
+        index = (
+            int(
+                hashlib.sha1(seed.encode("utf-8")).hexdigest(),
+                16,
+            )
+            % len(word_list_short)
+        )
         word = word_list_short[index]
         game = Wordle(word)
-        print('\n' * 100)
+        print("\n" * 100)
         while game.state == GameState.IN_PROGRESS:
             while True:
                 try:
@@ -130,7 +132,7 @@ class WordleCLI:
                     print()
                 else:
                     break
-            print('\n' * 100)
+            print("\n" * 100)
             for word, result in zip(game.guess_list, game.results):
                 self.print_result(word, result)
             print()
@@ -144,7 +146,7 @@ class WordleCLI:
         print()
 
     @staticmethod
-    def print_result(guess_word: str, result: List[MatchType]) -> None:
+    def print_result(guess_word: str, result: list[MatchType]) -> None:
         strs = []
         for letter, match_type in zip(guess_word, result):
             if match_type == MatchType.MISS:
@@ -154,7 +156,7 @@ class WordleCLI:
             else:
                 prefix = Fore.BLACK + Back.YELLOW
             strs.append(prefix + letter)
-        print(''.join(strs))
+        print("".join(strs))
 
     @staticmethod
     def print_letter_states(letter_states: Mapping[str, LetterState]) -> None:
@@ -167,23 +169,30 @@ class WordleCLI:
             else:
                 prefix = Fore.LIGHTBLACK_EX + Back.BLACK
             strs.append(prefix + letter)
-        print(''.join(strs))
+        print("".join(strs))
 
     @staticmethod
-    def print_share_code(results: List[List[MatchType]], won: bool, seed: str) -> None:
+    def print_share_code(results: list[list[MatchType]], won: bool, seed: str) -> None:
         print(f"pbwordle {len(results) if won else 'X'}/6 [seed: {seed}]")
         for result in results:
-            print(''.join(
-                '⬛' if match_type == MatchType.MISS
-                else '🟨' if match_type == MatchType.WRONG_POS
-                else '🟩'
-                for match_type in result
-            ))
+            print(
+                "".join(
+                    "⬛"
+                    if match_type == MatchType.MISS
+                    else "🟨"
+                    if match_type == MatchType.WRONG_POS
+                    else "🟩"
+                    for match_type in result
+                ),
+            )
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(prog="wordle", description="Clone of the popular Wordle game")
-    parser.add_argument("seed", help="Optional game seed", nargs='?')
+    parser = argparse.ArgumentParser(
+        prog="wordle",
+        description="Clone of the popular Wordle game",
+    )
+    parser.add_argument("seed", help="Optional game seed", nargs="?")
     args = parser.parse_args()
     cli = WordleCLI()
     cli.new_game(seed=args.seed)
