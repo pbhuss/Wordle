@@ -6,6 +6,7 @@ from wordle import GameOverError
 from wordle import GameState
 from wordle import InvalidWordError
 from wordle import LetterState
+from wordle import MatchType
 from wordle import word_list
 from wordle import Wordle
 
@@ -93,3 +94,25 @@ def test_wordle_guess__invalid_word(guess_word):
     wordle = Wordle("apple")
     with pytest.raises(InvalidWordError):
         wordle.guess(guess_word)
+
+
+m = MatchType.MISS
+w = MatchType.WRONG_POS
+h = MatchType.HIT
+
+
+@pytest.mark.parametrize(
+    "word,guess_word,expected",
+    [
+        ("apple", "plate", [w, w, w, m, h]),
+        ("crate", "trees", [w, h, w, m, m]),
+        ("apple", "apple", [h, h, h, h, h]),
+        ("apple", "quirk", [m, m, m, m, m]),
+        ("twins", "twine", [h, h, h, h, m]),
+        ("queue", "undue", [w, m, m, h, h]),
+        ("lulls", "flail", [m, w, m, m, w]),
+    ],
+)
+def test_wordle_get_result(word, guess_word, expected):
+    wordle = Wordle(word=word)
+    assert wordle.get_result(guess_word) == expected
